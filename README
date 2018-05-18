@@ -1,0 +1,96 @@
+
+Minetest init.d script
+======================
+by orwell96
+
+This repository contains a basic script collection that
+allows to run a Minetest server as a regular user,
+controlled by an init.d service.
+
+Dependencies
+============
+You need the 'setuidgid' command from the 'daemontools'
+package, or a similar program.
+
+Setting up
+==========
+
+I assume you have set up a Minetest server ready to run as
+some arbitrary user (not root) on your GNU/Linux system
+that uses the /etc/init.d directory to manage services.
+
+Working as the privilegeless user, do this:
+
+1. Clone the repository
+
+2. The 'initd' directory inside this repo contains a
+Minetest mod. Move it to a location where Minetest
+can load it and eventually enable it.
+
+3. Inside your server's minetest.conf, add a configuration
+option
+----------
+initd_loop_file = <loop_filename>
+----------
+3. Edit the options inside conf.sh so that they mirror
+your Minetest setup. MINETEST_LOOPFILE is supposed to be
+/path/to/the/world/<loop_filename>
+(the same file name as the one in initd_loop_file)
+
+Now become root:
+
+4. Create a file inside /etc/init.d (with a name you choose),
+with the following content:
+----------
+#/bin/sh
+setuidgid <your user> /path/to/the/initd.sh $1
+----------
+This just invokes the initd.sh script as the privilegeless
+user, passing the command (start, stop, status a.s.o.).
+
+5. Find out how your system handles init.d scripts and
+enable your newly created system service. You eventually
+need to add some comments to your init.d file.
+Just look into other init.d scripts how those should look.
+
+Operating
+=========
+When you've set everything up properly, your minetest server
+should now start when the system boots.
+In the next examples <name> is the file name of the init script.
+
+Controlling via service system:
+-------------------------------
+You should be able to run commands like 'service <name> start'
+on your Minetest service. If that doesn't work, a last resort
+is to run /etc/init.d/<name>
+
+Controlling from the minetest server user:
+------------------------------------------
+If you are logged in to the user the server runs as, you can
+control it the same way as you would do for system services,
+by directly running the initd.sh script
+e.g. initd.sh start
+
+Controlling from ingame:
+------------------------
+In addition to the /shutdown chatcommand which works as usual,
+you can also invoke /restart, which will instruct the service
+to restart the server immediately.
+
+Final notes:
+============
+- The restart system is only enabled when the option
+ask_reconnect_on_crash is enabled in minetest.conf
+(this currently also applies to the '/restart' command)
+- When the minetest server crashes within 5 seconds
+after it started, it is not automatically restarted.
+- The loop file configuration must match, else the server
+will neither restart on a crash nor by using the /restart
+command.
+- The debug.txt (minetest's log output) will be located
+inside the repository directory (next to the initd.sh script)
+
+
+Suggestions and improvements are welcome.
+
